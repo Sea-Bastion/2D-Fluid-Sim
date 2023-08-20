@@ -11,7 +11,7 @@ parser.add_argument('-S', '--Save', action='store_true', dest='Save')
 parser.add_argument('-I', '--Input', action='store', default='sim data.json', dest='Input')
 parser.add_argument('-O', '--Output', action='store', default='sim video.mp4', dest='Output')
 parser.add_argument('-D', '--Display', action='store_true', dest='Display')
-parser.add_argument('-T', '--Delay', action='store', default=None, dest='Delay')
+parser.add_argument('-T', '--Delay', action='store', default=200, dest='Delay')
 args = parser.parse_args()
 
 # Import Data

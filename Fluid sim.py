@@ -17,10 +17,13 @@ Y = 1
 Z = 2
 
 
+# fluid properties
 density = 1
-grav = 9.8
+grav = 9.8 # currently doesn't do anything. no current external force.
 kenVisc = 1
 
+
+# simulation space properties
 h = 0.25
 SpaceSize = 100
 
@@ -28,6 +31,8 @@ SpaceSize = 100
 #hangle args
 parser = argparse.ArgumentParser()
 parser.add_argument('-O', '--Output', action='store', dest='Output', default='Save Sim Data/Latest Sim Data.json')
+parser.add_argument('-E', '--EndTime', action='store', dest='EndTime', default=1)
+parser.add_argument('-S', '--Samples', action='store', dest='Samples', default=50)
 
 args = parser.parse_args()
 
@@ -76,7 +81,7 @@ def Calculate_Acceleration(velocity, pressure):
 #the pressure edge condition should copy nearest as the tank is exserting pressure on it 
 #the flow velocity should have [0,0] at edge since the tank always stops the flow and isn't flowing.
 
-def F_function(t, u, shape):
+def Diff_Equation(t, u, shape):
     u = u.reshape(shape, order='C')
 
     pressure = Pressure_from_Velocity(u)
@@ -89,27 +94,38 @@ def F_function(t, u, shape):
 
 
 def main():
+
+    # set up initial conditions of simulation
     init = np.zeros((SpaceSize,SpaceSize,2))
     space = init.shape
     init[40:60,:,Y] = 5
-    endTime = 1
-    samples = 100
 
+    # set up how long the simulation will run and how much data will be saved
+    endTime = int(args.EndTime)
+    samples = int(args.Samples)
+
+
+    # flatten the initial and run the simulation
     Flat_Init = init.flatten(order='C')
-    a = integ.solve_ivp(F_function, (0, endTime), 
+    a = integ.solve_ivp(Diff_Equation, (0, endTime), 
                         Flat_Init, args=(init.shape,), 
                         t_eval=np.linspace(0,endTime,samples))
 
     print("Sim Finished, Saving...")
 
+
+    # reshape solved data, and set up space.
     sol = np.array([a.y[:,i].reshape(space) for i in range(a.t.size)])
     XGrid, YGrid = np.mgrid[0:h*space[0]:h, 0:h*space[1]:h].tolist()
     Coords = [XGrid, YGrid]
 
+
+    # find pressure for all simulation points
     # TODO break this out into a for loop and print progress
     Pressure = [ Pressure_from_Velocity(val).tolist()
                     for val in sol ]
 
+    # set up data and export to json file
     exportData = {
         "Flow Velocity" : sol.tolist(),
         "Time" : a.t.tolist(),
