@@ -6,7 +6,6 @@ import MathMethods as MM
 import argparse
 
 #parse args to see where and if to save data
-# TODO add argument for interval
 parser = argparse.ArgumentParser()
 parser.add_argument('-S', '--Save', action='store_true', dest='Save')
 parser.add_argument('-I', '--Input', action='store', default='sim data.json', dest='Input')

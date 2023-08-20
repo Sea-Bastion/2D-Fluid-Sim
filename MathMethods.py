@@ -169,10 +169,9 @@ def Inverse_Laplassian2d_SOR(U, err=1e-5, max_iter=200, init=np.NaN, dx=1):
 
             A[ind] = A_old[ind] + ( w_opt * Direction )
         
-        #end loop if done convergine
-        if (i%20==0):
-            if (abs(A_old-A) < err).all():
-                break
+        #end loop if done converging
+        if (abs(A_old-A) < err).all():
+            break
 
         A_old = np.copy(A)
 

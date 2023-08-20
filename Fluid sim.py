@@ -9,8 +9,9 @@ import numpy as np
 import json
 from scipy import integrate as integ
 from MathMethods import *
+import argparse
 
-
+# set Constants for simulation
 X = 0
 Y = 1
 Z = 2
@@ -24,6 +25,12 @@ h = 0.25
 SpaceSize = 100
 
 
+#hangle args
+parser = argparse.ArgumentParser()
+parser.add_argument('-O', '--Output', action='store', dest='Output', default='Save Sim Data/Latest Sim Data.json')
+
+args = parser.parse_args()
+
 #poisson pressure equation
 Pressure_Est = np.NaN
 def Pressure_from_Velocity(vel):
@@ -36,24 +43,10 @@ def Pressure_from_Velocity(vel):
     XTerm = partialx[X]**2 * -np.sign(partialx[X])
     Laplacian = -density * (YTerm + MTerm + XTerm)
 
-    # if(np.isnan(Pressure_Est).all()):
-    #     Pressure_Est = Inverse_Laplassian2d_Sq(Laplacian, mode="edge")
 
-    #TODO rather then putting this here, put it in math methods, also stop based on difference between interations
-    # ex if iteration is only 1e-5 different from the last at max then it's neglagible. 
-    # Iter = 0  
-    # while True:
-    #     Pressure_Est = Inverse_Laplassian2d_SOR(Laplacian, err=1e-2, init=Pressure_Est, dx=h)
+    ## TODO make an initial guess that's better then starting from 0s
 
-    #     LapTest = Laplassian2d(Pressure_Est, h, mode="nearest")
-    #     Error = np.abs( Laplacian - LapTest ) / np.abs( Laplacian ).max() * 100
-    #     Error = np.mean(Error)
 
-    #     if Error < 1 or Iter >= 10:
-    #         break
-        
-    #     Iter += 1
-    #     print("Pressure Error: %4.2f%% | Iteration: %i" % (Error, Iter))
     Pressure_Est = Inverse_Laplassian2d_SOR(Laplacian, err=1e-3, max_iter=200, init=Pressure_Est, dx=h)
 
     Pressure_Est = Pressure_Est - np.mean(Pressure_Est)
@@ -90,7 +83,7 @@ def F_function(t, u, shape):
     answer = Calculate_Acceleration(u, pressure)
 
 
-    print( "Sim Time: %.3f" % (t) )
+    print( "Sim Time: {0:d}s {1:03d}ms".format( int(t) , int( (t%1)*1000 ) ) )
 
     return answer.flatten()
 
@@ -99,7 +92,7 @@ def main():
     init = np.zeros((SpaceSize,SpaceSize,2))
     space = init.shape
     init[40:60,:,Y] = 5
-    endTime = 5
+    endTime = 1
     samples = 100
 
     Flat_Init = init.flatten(order='C')
@@ -113,6 +106,7 @@ def main():
     XGrid, YGrid = np.mgrid[0:h*space[0]:h, 0:h*space[1]:h].tolist()
     Coords = [XGrid, YGrid]
 
+    # TODO break this out into a for loop and print progress
     Pressure = [ Pressure_from_Velocity(val).tolist()
                     for val in sol ]
 
@@ -124,7 +118,7 @@ def main():
     }
     JsonText = json.dumps(exportData, indent=4)
 
-    with open("sim data.json", "w") as outfile:
+    with open(args.Output, "w") as outfile:
         outfile.write(JsonText)
 
 main()
